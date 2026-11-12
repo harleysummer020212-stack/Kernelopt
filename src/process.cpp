@@ -1,6 +1,8 @@
 #include "process.h"
 #include <windows.h>
 #include <tlhelp32.h>
+#include <memory>
+#include <vector>
 
 void Process::SetRealtimePriority() {
     HANDLE hProc = GetCurrentProcess();
