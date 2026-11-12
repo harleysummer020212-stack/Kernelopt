@@ -396,7 +396,7 @@ static void ApplyDarkTheme() {
     c[ImGuiCol_HeaderActive]     = {0.14f, 0.42f, 0.68f, 1.0f};
     c[ImGuiCol_Tab]              = {0.11f, 0.11f, 0.13f, 1.0f};
     c[ImGuiCol_TabHovered]       = {0.0f,  0.6f,  0.9f,  1.0f};
-    c[ImGuiCol_TabActive]        = {0.0f,  0.5f,  0.8f,  1.0f};
+    c[ImGuiCol_TabSelected]      = {0.0f,  0.5f,  0.8f,  1.0f};
     c[ImGuiCol_TabDimmed]         = {0.11f, 0.11f, 0.13f, 1.0f};
     c[ImGuiCol_TabDimmedSelected] = {0.0f,  0.4f,  0.7f,  1.0f};
     c[ImGuiCol_Text]             = {0.90f, 0.90f, 0.92f, 1.0f};
