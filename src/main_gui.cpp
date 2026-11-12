@@ -183,7 +183,7 @@ static void ApplyAll() {
     if (g_state.usbPoll)      { IRQ::PatchUSBPollingRate();           AddLog("[+] USB polling rate set to 1ms"); }
     if (g_state.mmcss)        { MMCSS::ApplyGamingProfile();         AddLog("[+] MMCSS gaming profile applied"); }
     if (g_state.procPrio)     { Process::SetRealtimePriority();       AddLog("[+] Process priority set to real-time"); }
-    if (g_state.coreIsolate)  { Process::IsolateGameCores();          AddLog("[+] Game cores isolated"); }
+    if (g_state.coreIsolate)  { Process::IsolateGameCores(GetCurrentProcess());
     if (g_state.aimTweaks) {
         Aim::DisablePointerPrecision();
         Aim::ApplyRawInput();
@@ -449,8 +449,8 @@ static void ApplyDarkTheme() {
     c[ImGuiCol_Tab]              = {0.11f, 0.11f, 0.13f, 1.0f};
     c[ImGuiCol_TabHovered]       = {0.0f,  0.6f,  0.9f,  1.0f};
     c[ImGuiCol_TabActive]        = {0.0f,  0.5f,  0.8f,  1.0f};
-    c[ImGuiCol_TabUnfocused]     = {0.11f, 0.11f, 0.13f, 1.0f};
-    c[ImGuiCol_TabUnfocusedActive]= {0.0f, 0.4f,  0.7f,  1.0f};
+    c[ImGuiCol_TabDimmed]         = {0.11f, 0.11f, 0.13f, 1.0f};
+    c[ImGuiCol_TabDimmedSelected] = {0.0f,  0.4f,  0.7f,  1.0f};
     c[ImGuiCol_Text]             = {0.90f, 0.90f, 0.92f, 1.0f};
     c[ImGuiCol_TextDisabled]     = {0.45f, 0.45f, 0.50f, 1.0f};
     c[ImGuiCol_Separator]        = {0.18f, 0.18f, 0.22f, 1.0f};
