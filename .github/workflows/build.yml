@@ -30,6 +30,9 @@ jobs:
           copy _imgui_tmp\imgui_draw.cpp      src\imgui\
           copy _imgui_tmp\imgui_tables.cpp    src\imgui\
           copy _imgui_tmp\imgui_widgets.cpp   src\imgui\
+          copy _imgui_tmp\imstb_rectpack.h    src\imgui\
+          copy _imgui_tmp\imstb_textedit.h    src\imgui\
+          copy _imgui_tmp\imstb_truetype.h    src\imgui\
           copy _imgui_tmp\backends\imgui_impl_win32.h    src\imgui\
           copy _imgui_tmp\backends\imgui_impl_win32.cpp  src\imgui\
           copy _imgui_tmp\backends\imgui_impl_dx11.h     src\imgui\
