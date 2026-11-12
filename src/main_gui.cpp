@@ -32,10 +32,7 @@
 #pragma comment(lib, "setupapi.lib")
 #pragma comment(lib, "cfgmgr32.lib")
 
-// Forward declare
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-// ─── State ────────────────────────────────────────────────────────────────────
 
 struct TweakState {
     bool timerRes      = false;
@@ -68,7 +65,6 @@ static float g_sens   = 1.0f;
 static float g_edpi   = 800.0f;
 static float g_cm360  = 45.0f;
 
-// D3D11 globals
 static ID3D11Device*           g_pd3dDevice           = nullptr;
 static ID3D11DeviceContext*    g_pd3dDeviceContext     = nullptr;
 static IDXGISwapChain*         g_pSwapChain            = nullptr;
@@ -83,8 +79,6 @@ static void AddLog(const char* fmt, ...) {
     g_log.push_back(std::string(buf));
     if (g_log.size() > 200) g_log.erase(g_log.begin());
 }
-
-// ─── D3D helpers ─────────────────────────────────────────────────────────────
 
 static void CreateRenderTarget() {
     ID3D11Texture2D* pBackBuffer = nullptr;
@@ -129,7 +123,6 @@ static bool CreateDeviceD3D(HWND hWnd) {
             &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext);
 
     if (res != S_OK) return false;
-
     CreateRenderTarget();
     return true;
 }
@@ -140,8 +133,6 @@ static void CleanupDeviceD3D() {
     if (g_pd3dDeviceContext) { g_pd3dDeviceContext->Release(); g_pd3dDeviceContext = nullptr; }
     if (g_pd3dDevice)        { g_pd3dDevice->Release();        g_pd3dDevice = nullptr; }
 }
-
-// ─── WndProc ─────────────────────────────────────────────────────────────────
 
 static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
@@ -164,8 +155,6 @@ static LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return DefWindowProcW(hWnd, msg, wParam, lParam);
 }
 
-// ─── Apply helpers ───────────────────────────────────────────────────────────
-
 static void ApplyAll() {
     if (g_state.timerRes)     { Timer::SetMaxResolution();             AddLog("[+] Timer resolution set to 0.5ms"); }
     if (g_state.schedulerTwk) { Registry::ApplySchedulerTweaks();     AddLog("[+] Scheduler tweaks applied"); }
@@ -183,7 +172,7 @@ static void ApplyAll() {
     if (g_state.usbPoll)      { IRQ::PatchUSBPollingRate();           AddLog("[+] USB polling rate set to 1ms"); }
     if (g_state.mmcss)        { MMCSS::ApplyGamingProfile();         AddLog("[+] MMCSS gaming profile applied"); }
     if (g_state.procPrio)     { Process::SetRealtimePriority();       AddLog("[+] Process priority set to real-time"); }
-    if (g_state.coreIsolate)  { Process::IsolateGameCores();          AddLog("[+] Game cores isolated"); }
+    if (g_state.coreIsolate)  { Process::IsolateGameCores(GetCurrentProcess()); AddLog("[+] Game cores isolated"); }
     if (g_state.aimTweaks) {
         Aim::DisablePointerPrecision();
         Aim::ApplyRawInput();
@@ -201,11 +190,8 @@ static void ApplyAll() {
     AddLog("[✓] Apply complete — some tweaks require reboot");
 }
 
-// ─── GUI render ──────────────────────────────────────────────────────────────
-
 static void RenderUI() {
     ImGuiIO& io = ImGui::GetIO();
-
     ImGui::SetNextWindowPos({0, 0});
     ImGui::SetNextWindowSize(io.DisplaySize);
     ImGui::Begin("##root", nullptr,
@@ -214,7 +200,6 @@ static void RenderUI() {
                  ImGuiWindowFlags_NoMove     |
                  ImGuiWindowFlags_NoBringToFrontOnFocus);
 
-    // Header
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.85f, 1.0f, 1.0f));
     ImGui::SetWindowFontScale(1.4f);
     ImGui::Text("KernelOpt  |  Zero-Delay Kernel Utility");
@@ -222,7 +207,6 @@ static void RenderUI() {
     ImGui::PopStyleColor();
     ImGui::Separator();
 
-    // Apply All button
     ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.0f, 0.55f, 0.9f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.0f, 0.7f,  1.0f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.0f, 0.4f,  0.75f, 1.0f));
@@ -234,26 +218,20 @@ static void RenderUI() {
     ImGui::Spacing();
 
     if (ImGui::BeginTabBar("MainTabs")) {
-
-        // ── Timer & Scheduler ──────────────────────────────────────────────
         if (ImGui::BeginTabItem("Timer / CPU")) {
             ImGui::Spacing();
             ImGui::Checkbox("0.5ms Timer Resolution (NtSetTimerResolution)", &g_state.timerRes);
             ImGui::SameLine(); ImGui::TextDisabled("(?)");
             if (ImGui::IsItemHovered()) ImGui::SetTooltip("Calls NtSetTimerResolution(5000) for minimum OS timer interval.");
-
             ImGui::Checkbox("Disable Dynamic Tick + Disable HPET (bcdedit)", &g_state.dynTick);
             ImGui::SameLine(); ImGui::TextDisabled("(?)");
             if (ImGui::IsItemHovered()) ImGui::SetTooltip("Requires reboot. Disables power-saving CPU tick suppression.");
-
             ImGui::Checkbox("Win32PrioritySeparation = 0x26 (max foreground boost)", &g_state.schedulerTwk);
             ImGui::Checkbox("Disable DPC Watchdog", &g_state.dpcWatchdog);
             ImGui::Checkbox("Real-time process priority + SeLockMemory", &g_state.procPrio);
             ImGui::Checkbox("Isolate game cores (SetProcessDefaultCpuSets)", &g_state.coreIsolate);
             ImGui::EndTabItem();
         }
-
-        // ── Power ─────────────────────────────────────────────────────────
         if (ImGui::BeginTabItem("Power")) {
             ImGui::Spacing();
             ImGui::Checkbox("Activate Ultimate Performance power scheme", &g_state.ultPerf);
@@ -261,43 +239,32 @@ static void RenderUI() {
             if (ImGui::IsItemHovered()) ImGui::SetTooltip("Duplicates the hidden e9a42b02 GUID and sets it active.\nAlso disables USB selective suspend.");
             ImGui::EndTabItem();
         }
-
-        // ── Network ───────────────────────────────────────────────────────
         if (ImGui::BeginTabItem("Network")) {
             ImGui::Spacing();
             ImGui::Checkbox("Disable Nagle (TcpAckFrequency + TCPNoDelay)", &g_state.nagle);
             ImGui::Checkbox("Disable TCP Auto-Tuning (netsh)", &g_state.tcpAutoTune);
             ImGui::Checkbox("Remove QoS throttle (NonBestEffortLimit=0)", &g_state.qos);
             ImGui::Checkbox("Disable NIC interrupt moderation", &g_state.hwGpuSched);
-            ImGui::SameLine(); ImGui::TextDisabled("Note: also toggles HAGS below");
             ImGui::EndTabItem();
         }
-
-        // ── GPU ───────────────────────────────────────────────────────────
         if (ImGui::BeginTabItem("GPU")) {
             ImGui::Spacing();
             ImGui::Checkbox("Hardware-Accelerated GPU Scheduling (HAGS)", &g_state.hwGpuSched);
             ImGui::SameLine(); ImGui::TextDisabled("(?)");
             if (ImGui::IsItemHovered()) ImGui::SetTooltip("Requires WDDM 2.7+ and reboot.");
-
             ImGui::Checkbox("Disable TDR (TdrLevel=0)", &g_state.tdr);
             ImGui::Checkbox("NVIDIA Max Performance mode (PowerMizerLevel=1)", &g_state.nvPower);
             ImGui::EndTabItem();
         }
-
-        // ── IRQ / MSI ─────────────────────────────────────────────────────
         if (ImGui::BeginTabItem("IRQ / USB")) {
             ImGui::Spacing();
             ImGui::Checkbox("Boost IRQ 8 / 9 priority", &g_state.irqPrio);
             ImGui::Checkbox("Enable MSI mode on all PCI devices", &g_state.msiMode);
             ImGui::SameLine(); ImGui::TextDisabled("(?)");
             if (ImGui::IsItemHovered()) ImGui::SetTooltip("Message Signaled Interrupts: lower latency than legacy INTx.");
-
             ImGui::Checkbox("USB HID polling rate → 1ms (125 → 1000 Hz)", &g_state.usbPoll);
             ImGui::EndTabItem();
         }
-
-        // ── MMCSS ─────────────────────────────────────────────────────────
         if (ImGui::BeginTabItem("MMCSS")) {
             ImGui::Spacing();
             ImGui::Checkbox("Apply MMCSS Gaming profile (SystemResponsiveness=0)", &g_state.mmcss);
@@ -305,12 +272,8 @@ static void RenderUI() {
             if (ImGui::IsItemHovered()) ImGui::SetTooltip("Sets GPU Priority=8, CPU Priority=6, NetworkThrottlingIndex=0xFFFFFFFF.\nAlso registers this process thread under MMCSS 'Games'.");
             ImGui::EndTabItem();
         }
-
-        // ── Aim ───────────────────────────────────────────────────────────
         if (ImGui::BeginTabItem("Aim")) {
             ImGui::Spacing();
-
-            // OS tweaks
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.9f, 0.5f, 1.0f));
             ImGui::Text("OS-Level Aim Tweaks");
             ImGui::PopStyleColor();
@@ -319,10 +282,7 @@ static void RenderUI() {
             ImGui::SameLine(); ImGui::TextDisabled("(?)");
             if (ImGui::IsItemHovered())
                 ImGui::SetTooltip("Sets SmoothMouseX/YCurve to zero, disables enhance pointer precision,\nsets pointer speed to 6/11 (1:1 mapping).");
-
             ImGui::Spacing();
-
-            // eDPI calculator
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.9f, 0.5f, 1.0f));
             ImGui::Text("eDPI Calculator");
             ImGui::PopStyleColor();
@@ -334,16 +294,12 @@ static void RenderUI() {
             g_edpi  = g_dpi * g_sens;
             g_cm360 = 36000.0f / g_edpi;
             ImGui::Text("eDPI: %.1f   |   cm/360: %.2f", g_edpi, g_cm360);
-
             ImGui::Spacing();
-
-            // Kernel aim driver
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 0.1f, 1.0f));
             ImGui::Text("Ring-0 Kernel Aim Driver (aim_drv.sys)");
             ImGui::PopStyleColor();
             ImGui::Separator();
             ImGui::TextWrapped("Load aim_drv.sys manually (sc create / OSR Driver Loader) then connect:");
-
             if (AimClient::IsConnected()) {
                 ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.4f, 1.0f));
                 ImGui::Text("Driver: CONNECTED");
@@ -359,7 +315,6 @@ static void RenderUI() {
                         AddLog("[!] Failed to open \\\\.\\KernelAim — driver not loaded");
                 }
             }
-
             ImGui::Spacing();
             ImGui::Checkbox("Enable kernel aim (push config to ring-0)", &g_state.kernelAim);
             if (g_state.kernelAim) {
@@ -381,11 +336,8 @@ static void RenderUI() {
                 }
                 ImGui::Unindent();
             }
-
             ImGui::EndTabItem();
         }
-
-        // ── Log ───────────────────────────────────────────────────────────
         if (ImGui::BeginTabItem("Log")) {
             ImGui::Spacing();
             if (ImGui::Button("Clear")) g_log.clear();
@@ -406,14 +358,10 @@ static void RenderUI() {
             ImGui::EndChild();
             ImGui::EndTabItem();
         }
-
         ImGui::EndTabBar();
     }
-
     ImGui::End();
 }
-
-// ─── Dark theme ──────────────────────────────────────────────────────────────
 
 static void ApplyDarkTheme() {
     ImGuiStyle& s = ImGui::GetStyle();
@@ -449,8 +397,8 @@ static void ApplyDarkTheme() {
     c[ImGuiCol_Tab]              = {0.11f, 0.11f, 0.13f, 1.0f};
     c[ImGuiCol_TabHovered]       = {0.0f,  0.6f,  0.9f,  1.0f};
     c[ImGuiCol_TabActive]        = {0.0f,  0.5f,  0.8f,  1.0f};
-    c[ImGuiCol_TabUnfocused]     = {0.11f, 0.11f, 0.13f, 1.0f};
-    c[ImGuiCol_TabUnfocusedActive]= {0.0f, 0.4f,  0.7f,  1.0f};
+    c[ImGuiCol_TabDimmed]         = {0.11f, 0.11f, 0.13f, 1.0f};
+    c[ImGuiCol_TabDimmedSelected] = {0.0f,  0.4f,  0.7f,  1.0f};
     c[ImGuiCol_Text]             = {0.90f, 0.90f, 0.92f, 1.0f};
     c[ImGuiCol_TextDisabled]     = {0.45f, 0.45f, 0.50f, 1.0f};
     c[ImGuiCol_Separator]        = {0.18f, 0.18f, 0.22f, 1.0f};
@@ -459,10 +407,7 @@ static void ApplyDarkTheme() {
     c[ImGuiCol_ResizeGripActive] = {0.0f,  0.75f, 1.0f,  1.0f};
 }
 
-// ─── WinMain ─────────────────────────────────────────────────────────────────
-
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
-    // Require admin
     {
         HANDLE token = nullptr;
         OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
@@ -512,7 +457,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
 
     AddLog("[*] KernelOpt started — select tweaks and click APPLY ALL");
 
-    // Try connecting to optional kernel drivers on startup
     if (AimClient::Connect())
         AddLog("[+] KernelAim driver detected");
     else
