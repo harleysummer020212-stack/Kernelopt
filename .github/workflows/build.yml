@@ -1,18 +1,23 @@
 name: Build KernelOpt.exe
-
+ 
 on:
   push:
     branches: [ "**" ]
   workflow_dispatch:
-
+ 
 jobs:
   build:
     runs-on: windows-latest
-
+ 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
+ 
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+ 
       - name: Clone ImGui
         shell: cmd
         run: |
@@ -29,18 +34,17 @@ jobs:
           copy _imgui_tmp\backends\imgui_impl_win32.cpp  src\imgui\
           copy _imgui_tmp\backends\imgui_impl_dx11.h     src\imgui\
           copy _imgui_tmp\backends\imgui_impl_dx11.cpp   src\imgui\
-
+ 
       - name: Configure CMake
-        uses: threeal/cmake-action@v2
-        with:
-          generator: Visual Studio 17 2022
-          args: -A x64
-
+        shell: cmd
+        run: cmake -B build -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release
+ 
       - name: Build
-        run: cmake --build build --config Release
-
+        shell: cmd
+        run: cmake --build build
+ 
       - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:
           name: KernelOpt
-          path: build\Release\KernelOpt.exe
+          path: build\KernelOpt.exe
